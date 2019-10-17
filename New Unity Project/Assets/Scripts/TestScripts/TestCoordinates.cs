@@ -20,8 +20,8 @@ public class TestCoordinates : MonoBehaviour
     void Update()
     {
 
-        mousePos.x = -Input.mousePosition.x*5;
-        mousePos.y = -Input.mousePosition.y*5;
+        mousePos.x = -Input.mousePosition.x*20;
+        mousePos.y = -Input.mousePosition.y*20;
 
        // mousePos.x = Input.GetAxis("Horizontal");
        // mousePos.y = Input.GetAxis("Vertical");

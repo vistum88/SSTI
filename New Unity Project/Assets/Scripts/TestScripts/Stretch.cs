@@ -8,8 +8,11 @@ public class Stretch : MonoBehaviour
     {
         for (int i = 0; i < transform.childCount; i++)
         {
-            Transform child = transform.GetChild(i);
-            child.position = new Vector3(0, (transform.childCount-i) * value, 0);
+            if (i != transform.childCount - 1)
+            {
+                Transform child = transform.GetChild(i);
+                child.position = new Vector3(0, (transform.childCount - i) * value, 0);
+            }
         }
     }
 }
