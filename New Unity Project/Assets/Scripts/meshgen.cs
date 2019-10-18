@@ -28,19 +28,19 @@ public struct TModelMeshData
 
 
 [System.Serializable]
-public struct TModelBores
+public struct TModelBore
 {
     public string name;
     public int id;
-    public double x_up, y_up, z_up;
-    public double x_dn, y_dn, z_dn;
+    public float x_up, y_up, z_up;
+    public float x_dn, y_dn, z_dn;
 }
 
 
 [System.Serializable]
 public struct TModelData3D
 {
-    public TModelBores[] bores;
+    public TModelBore[] bores;
     public TModelMeshData mesh;
 }
 
@@ -62,6 +62,7 @@ public class meshgen : MonoBehaviour
 {
     private TJSONdata jsondata;
     public string gmfFileName = "plotfull.json";
+    public GameObject bore_prefab;
     //GameObject stol = new GameObject("Stol");
     //Instantiate(stol, new Vector3(0, 0, 0), Quaternion.identity);
 
@@ -71,11 +72,11 @@ public class meshgen : MonoBehaviour
 
     private void Awake()
     {
-        LoadMeshData();
-        Generate();
+        LoadData();
+        ScaleMesh();
     }
 
-    private void LoadMeshData()
+    private void LoadData()
     {
         string gmfFilePath = Path.Combine(Application.streamingAssetsPath, gmfFileName);
         print(gmfFilePath);
@@ -89,8 +90,13 @@ public class meshgen : MonoBehaviour
         {
             Debug.LogError("Cannot load game data!");
         }
+    }
+
+    private void ScaleMesh()
+    {
 
         float minx, maxx, miny, maxy, minz, maxz;
+        float scalex = 0.02F, scaley = 0.05F, scalez = 0.02F;
         float x, y, z;
  
         minx = miny = minz = 1000000000.0F;
@@ -109,9 +115,9 @@ public class meshgen : MonoBehaviour
 
                 for (int i = 0; i < vertices.Length; i++)
                 {
-                    x = vertices[i].x *= 0.02F;
-                    y = vertices[i].y *= 0.05F;
-                    z = vertices[i].z *= 0.02F;
+                    x = vertices[i].x *= scalex;
+                    y = vertices[i].y *= scaley;
+                    z = vertices[i].z *= scalez;
                     if (x > maxx) maxx = x;
                     if (x < minx) minx = x;
                     if (y != 0.0F && y > maxy) maxy = y;
@@ -121,8 +127,6 @@ public class meshgen : MonoBehaviour
                 }
             }
         }
-
-        print("box: " + minx + ", " + maxx + ", " + miny + ", " + maxy + ", " + minz + ", " + maxz);
 
         x = -(minx + maxx) * 0.5F;
         y = -miny;
@@ -149,43 +153,51 @@ public class meshgen : MonoBehaviour
             }
         }
 
-        minx = miny = minz = 1000000000.0F;
-        maxx = maxy = maxz = -minx;
-
-        for (int h = 0; h < jsondata.gmfdata.data3d.mesh.horizonts.Length; h++)
+        for (int i = 0; i < jsondata.gmfdata.data3d.bores.Length; i++)
         {
-            THorizontData horz = jsondata.gmfdata.data3d.mesh.horizonts[h];
-            Vector3[] vertices;
+            TModelBore Bore = jsondata.gmfdata.data3d.bores[i];
 
-            for (int j = 0; j < 3; j++)
-            {
-                vertices = horz.surfaceup.vertices;
+            jsondata.gmfdata.data3d.bores[i].x_dn *= scalex;
+            jsondata.gmfdata.data3d.bores[i].x_dn += z;
+            jsondata.gmfdata.data3d.bores[i].y_dn *= scalex;
+            jsondata.gmfdata.data3d.bores[i].y_dn += x;
+            jsondata.gmfdata.data3d.bores[i].z_dn *= scaley;
+            jsondata.gmfdata.data3d.bores[i].z_dn += y;
 
-                if (j == 1) vertices = horz.surfacedn.vertices;
-                if (j == 2) vertices = horz.surfacesd.vertices;
-            
-                for (int i = 0; i < vertices.Length; i++)
-                {
-                    x = vertices[i].x;
-                    y = vertices[i].y;
-                    z = vertices[i].z;
-                    if (x > maxx) maxx = x;
-                    if (x < minx) minx = x;
-                    if (y != 0.0F && y > maxy) maxy = y;
-                    if (y != 0.0F && y < miny) miny = y;
-                    if (z > maxz) maxz = z;
-                    if (z < minz) minz = z;
-                }
-            }
+            jsondata.gmfdata.data3d.bores[i].x_up *= scalex;
+            jsondata.gmfdata.data3d.bores[i].x_up += z;
+            jsondata.gmfdata.data3d.bores[i].y_up *= scalex;
+            jsondata.gmfdata.data3d.bores[i].y_up += x;
+            jsondata.gmfdata.data3d.bores[i].z_up *= scaley;
+            jsondata.gmfdata.data3d.bores[i].z_up += y;
+
+//            jsondata.gmfdata.data3d.bores[i] = Bore;
         }
 
-        print("box: " + minx + ", " + maxx + ", " + miny + ", " + maxy + ", " + minz + ", " + maxz);
     }
-    
+
     // Start is called before the first frame update
     void Start()
     {
 
+        GeneratePlotBores();
+        GeneratePlotMesh();
+    }
+
+    private void GeneratePlotBores()
+    {
+        for (int i = 0; i < jsondata.gmfdata.data3d.bores.Length; i++)
+        {
+            TModelBore Bore = jsondata.gmfdata.data3d.bores[i];
+            Vector3 pos = new Vector3(Bore.y_dn, Bore.z_dn+1.0F, Bore.x_dn);
+//            Vector3 pos = new Vector3((Bore.y_dn + Bore.y_up) * 0.5F, (Bore.z_dn + Bore.z_up) * 0.5F, (Bore.x_dn + Bore.x_up) * 0.5F);
+
+            GameObject bore = Instantiate(bore_prefab, pos, Quaternion.identity);
+            bore.transform.parent = transform;
+        }
+    }
+    private void GeneratePlotMesh()
+    { 
         for (int h = 0; h < jsondata.gmfdata.data3d.mesh.horizonts.Length; h++)
         {
             THorizontData horzmesh = jsondata.gmfdata.data3d.mesh.horizonts[h];
@@ -247,6 +259,8 @@ public class meshgen : MonoBehaviour
             
             MeshCollider meshCollider = horz.AddComponent<MeshCollider>();
             meshCollider.sharedMesh = mesh;
+
+            horz.transform.position = new Vector3(0F, 0.0F, 0F);
         }
     }
 

@@ -1,0 +1,29 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class RotateTable : MonoBehaviour
+{
+	Vector3 preVector = Vector3.zero;
+	Vector3 currVector = Vector3.zero;
+    float angle;
+
+    void OnTriggerEnter(Collider other)
+    {
+        currVector = transform.parent.position - other.transform.position;
+    }
+
+
+
+    void OnTriggerStay(Collider other)
+    {
+        preVector = currVector;
+        currVector = transform.parent.position - other.transform.position;
+
+        if (true/*grabPinchAction.GetStateDown()*/)
+        { 
+            angle = Vector3.Angle(preVector, currVector);
+            transform.rotation = Quaternion.AngleAxis(angle, Vector3.Cross(preVector, currVector));
+        }
+    }
+}
